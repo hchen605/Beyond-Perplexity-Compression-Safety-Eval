@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # unqover arguments
-    parser.add_argument("--word_lists", type=str, default="/uufs/chpc.utah.edu/common/home/u1320595/toxicity_eval/raw_datasets/unqover/word_lists")
+    parser.add_argument("--word_lists", type=str, default="LLM_Compression_Eval_Data/unqover/word_lists")
     parser.add_argument("--metrics", type=str, help="the unqover metrics to be evaluated, separate with ,")
     parser.add_argument("--group_by", type=str, choices=["subj_act", "subj", "gender_act"], help="group_by is useful when metric==subj_bias")
     parser.add_argument("--do_sample", action="store_true")
@@ -57,6 +57,28 @@ if __name__ == "__main__":
     parser.add_argument("--awq", action="store_true")
     parser.add_argument("--gptq", action="store_true")
     parser.add_argument("--flash_attention", action="store_true")
+    parser.add_argument(
+        "--lora",
+        action="store_true",
+        help="If given, we're evaluating a 4-bit quantized GPTQ model."
+    )
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="If given, we're evaluating a 4-bit quantized GPTQ model."
+    )
+    parser.add_argument(
+        "--prune_path",
+        type=str,
+        default=None,
+        help="If uploading to hf, this is the model name"
+    )
+    parser.add_argument(
+        "--lora_path",
+        type=str,
+        default=None,
+        help="If uploading to hf, this is the model name"
+    )
 
     # experiment arguments
     parser.add_argument("--disable_progress_bar", action="store_true")
@@ -112,10 +134,11 @@ if __name__ == "__main__":
         if args.dataset == "unqover":
             from dataset import read_multiqa_dataset
             category_list = args.category.split(",")
+            #category_list = ["country", "ethnicity", "religion", "gender_occupation"]
             results_dict_global = copy.deepcopy(config_dict)
 
             for category in category_list:
-                print(f"category -> {category}")
+                print(f"category -> {category}", flush=True)
                 data = read_multiqa_dataset("unqover", category)
                 assert args.metrics is not None, "must specify unqover metrics"
                 if args.do_sample:
@@ -138,7 +161,7 @@ if __name__ == "__main__":
             ambig_bias, disambig_bias = [], []
 
             for category in category_list:
-                print(f"category -> {category}")
+                print(f"category -> {category}", flush=True)
                 data = read_multiqa_dataset(dataset_name="bbq", category=category)
                 data = [format_bbq_input(line) for line in data]
                 res = engine.inference_bbq(bbq_dataset=data, args=args)

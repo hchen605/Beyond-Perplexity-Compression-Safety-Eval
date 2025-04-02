@@ -29,6 +29,13 @@ def configure_model_loading(args):
             args.model_name_or_path,
             fuse_layers=False  # fuse_layers=True will lead to weird input, lm logits mismatch bug
         )
+        print('AWQ model loaded')
+        if args.lora:
+            model = model.model
+            #if lora:
+            from peft import PeftModel
+            model = PeftModel.from_pretrained(model, args.lora_path)
+            print('QLoRA model loaded')
     elif args.gptq:
         from auto_gptq import AutoGPTQForCausalLM
         model = AutoGPTQForCausalLM.from_quantized(
@@ -72,7 +79,8 @@ def configure_model_loading(args):
         model = AutoModelForCausalLM.from_pretrained(
             args.model_name_or_path,
             torch_dtype=torch.float16,
-            device_map="balanced",
+            #device_map="balanced",
+            device_map="auto",
             trust_remote_code=True,
         )
     return model
@@ -84,6 +92,16 @@ def configure_tokenizer_model_loading(args):
         sys.path.append(args.llm_pruner_home)
         res = torch.load(os.path.join(args.model_name_or_path, "pytorch_model.bin"))
         tokenizer, model = res["tokenizer"], res["model"]
+    elif args.prune:
+        # Load Pruned Model
+        pruned_dict = torch.load(args.prune_path, map_location='cuda')
+        tokenizer, model = pruned_dict['tokenizer'], pruned_dict['model']
+        print('Pruned model loaded')
+        # Wrap the base model with the LoRA adapter weights
+        if args.lora:
+            from peft import PeftModel
+            model = PeftModel.from_pretrained(model, args.lora_path)
+            print('LoRa model loaded')
     elif args.bonsai:
         if not args.bonsai_home:
             args.bonsai_home="/uufs/chpc.utah.edu/common/home/u1320595/Bonsai"
@@ -94,7 +112,7 @@ def configure_tokenizer_model_loading(args):
 
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     tokenizer.padding_side = "left"
-    print(f"finish loading model and tokenizer!")
+    print(f"finish loading model and tokenizer!", flush=True)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"  # this needs to be changed if we are doing 30B model
     
@@ -148,6 +166,29 @@ if __name__ == "__main__":
     parser.add_argument("--results_dest", type=str, default="./logs/default_results.json")
     parser.add_argument("--save_outputs", action="store_true")
     parser.add_argument("--outputs_dest", type=str)
+    parser.add_argument(
+        "--lora",
+        action="store_true",
+        help="If given, we're evaluating a 4-bit quantized GPTQ model."
+    )
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="If given, we're evaluating a 4-bit quantized GPTQ model."
+    )
+    parser.add_argument(
+        "--prune_path",
+        type=str,
+        default=None,
+        help="If uploading to hf, this is the model name"
+    )
+    parser.add_argument(
+        "--lora_path",
+        type=str,
+        default=None,
+        help="If uploading to hf, this is the model name"
+    )
+
     
     args = parser.parse_args()
 
@@ -158,7 +199,7 @@ if __name__ == "__main__":
 
     # config = AutoConfig.from_pretrained(args.model_name_or_path)  # it seems we do not need this
 
-    dataset = read_dataset(dataset_name=args.dataset)
+    dataset = read_dataset(dataset_name=args.dataset, home_dir='LLM_Compression_Eval_Data')
     random.seed(args.seed)
     random.shuffle(dataset)
     dataset = dataset[:args.n_samples]
@@ -193,7 +234,7 @@ if __name__ == "__main__":
     generator = Generator(tokenizer=tokenizer, model=model)
     
     generation = generator.generate(dataset=dataset, generation_config=generation_config, args=args)
-    # print(f"total num of generation -> {len(generation)}")
+    print(f"total num of generation -> {len(generation)}", flush=True)
     res, results_dict = evaluator.evaluate_generation(dataset_name=args.dataset, dataset=generation, metrics=None)
     for k, v in results_dict.items():
         results_dict_global[k] = v
