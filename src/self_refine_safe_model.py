@@ -4,7 +4,7 @@ import logging
 
 # Lazy loader for the HF pipeline
 
-def _load_backbone(model_name: str = "meta-llama/Meta-Llama-3-8B",
+def _load_backbone(model_name: str = "meta-llama/Meta-Llama-3-8B-Instruct",
                    **hf_kwargs) -> "transformers.Pipeline":
     from transformers import pipeline
     defaults = dict(model=model_name, device_map="auto", trust_remote_code=True)
@@ -51,7 +51,8 @@ class SelfRefineSafeModel:
         self,
         backbone: "transformers.Pipeline | None" = None,
         generation_kwargs: Dict[str, Any] | None = None,
-        log_file: str = "self_refine.log",
+        log_file: Optional[str] = "self_refine.log",
+        save_log: bool = False,
     ):
         # Configure logging
         self.logger = logging.getLogger("SelfRefineSafeModel")
@@ -60,12 +61,15 @@ class SelfRefineSafeModel:
         for handler in list(self.logger.handlers):
             self.logger.removeHandler(handler)
         # Add file handler
-        fh = logging.FileHandler(log_file, mode="w")
-        fh.setLevel(logging.DEBUG)
-        fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-        fh.setFormatter(fmt)
-        self.logger.addHandler(fh)
-
+        if save_log and log_file:
+            fh = logging.FileHandler(log_file, mode="w")
+            fh.setLevel(logging.DEBUG)
+            fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            fh.setFormatter(fmt)
+            self.logger.addHandler(fh)
+        else:
+            # no-op handler to suppress warnings
+            self.logger.addHandler(logging.NullHandler())
         # Load LLM pipeline
         self.llm = backbone or _load_backbone()
         self.generation_kwargs = generation_kwargs or dict(
@@ -233,8 +237,8 @@ class SelfRefineSafeModel:
         return self._generate(prompt)
 
 
-def load_safe_model(log_file: str = "self_refine.log") -> SelfRefineSafeModel:
-    """
-    Factory: returns a SelfRefineSafeModel with logs written to `log_file`.
-    """
-    return SelfRefineSafeModel(log_file=log_file)
+def load_safe_model(
+    log_file: Optional[str] = "self_refine.log",
+    save_log: bool = False
+) -> SelfRefineSafeModel:
+    return SelfRefineSafeModel(log_file=log_file, save_log=save_log)
