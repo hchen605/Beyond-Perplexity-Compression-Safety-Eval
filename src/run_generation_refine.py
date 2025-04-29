@@ -189,6 +189,8 @@ if __name__ == "__main__":
         default=None,
         help="If uploading to hf, this is the model name"
     )
+    parser.add_argument("--insert_safety", action="store_true")
+    parser.add_argument("--self_refine", action="store_true")
 
     
     args = parser.parse_args()
@@ -207,14 +209,14 @@ if __name__ == "__main__":
 
     evaluator = Evaluator()
 
-    #tokenizer, _ = configure_tokenizer_model_loading(args)
-    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
-    tokenizer.padding_side = "left"
-    print(f"finish loading model and tokenizer!", flush=True)
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    model = load_safe_model().to(device) #add self-refine model
+    if not args.self_refine:
+        tokenizer, model = configure_tokenizer_model_loading(args)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+        tokenizer.padding_side = "left"
+        print(f"finish loading model and tokenizer!", flush=True)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = load_safe_model(log_file="./log/toxigen/self_refine-llama3-8b-instruct-100.log", save_log=True).to(device) #add self-refine model
 
     generation_config = GenerationConfig(
         min_new_tokens=args.min_new_tokens,
