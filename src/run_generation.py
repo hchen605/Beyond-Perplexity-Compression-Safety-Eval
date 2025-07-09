@@ -83,6 +83,10 @@ def configure_model_loading(args):
             device_map="auto",
             trust_remote_code=True,
         )
+        if args.lora:
+            from peft import PeftModel
+            model = PeftModel.from_pretrained(model, args.lora_path)
+            print('LoRA model loaded')
     return model
 
 def configure_tokenizer_model_loading(args):
@@ -188,7 +192,7 @@ if __name__ == "__main__":
         default=None,
         help="If uploading to hf, this is the model name"
     )
-
+    parser.add_argument("--insert_safety", action="store_true")
     
     args = parser.parse_args()
 

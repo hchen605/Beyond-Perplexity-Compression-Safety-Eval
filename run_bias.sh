@@ -1,22 +1,22 @@
 #!/bin/bash
 #SBATCH -J job_id
-#SBATCH -o ./log/bbq/llama3-8b-pr-0.3-lora-avg.out
+#SBATCH -o ./log/bbq/llama3_8b_instruct_awq_openfunc_sft_avg.out
 #SBATCH --gres=gpu:1 #Number of GPU devices to use [0-2]
-#SBATCH --nodelist=leon06 #YOUR NODE OF PREFERENCE
+#SBATCH --nodelist=leon09 #YOUR NODE OF PREFERENCE
 
 # Set Hugging Face token
 #export CUDA_VISIBLE_DEVICES=0,1
 
-module load shared singularity 
+module load shared apptainer 
 
 
 # DATASET=bbq_fewshot
-# SAVE_AS=llama3_8b_raw
+# SAVE_AS=llama3_8b_instruct
 
 # singularity exec --nv ../LLM-Pruner/img/llm-pruner-awq.img \
 #     python src/run_multi_qa.py \
-#     --tokenizer ../Meta-Llama-3-8B \
-#     --model_name_or_path ../Meta-Llama-3-8B \
+#     --tokenizer meta-llama/Llama-3.1-8B-Instruct \
+#     --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
 #     --dataset ${DATASET} \
 #     --category age,disability_status,gender_identity,nationality,physical_appearance,race_ethnicity,race_x_gender,race_x_ses,religion,ses,sexual_orientation \
 #     --do_inference \
@@ -27,12 +27,12 @@ module load shared singularity
 #     --results_dest ./log/bbq/${DATASET}_${SAVE_AS}.json
 
 # DATASET=bbq_fewshot
-# SAVE_AS=llama3_8b_awq
+# SAVE_AS=llama3_8b_instruct_awq
 
 # singularity exec --nv ../LLM-Pruner/img/llm-pruner-awq.img \
 #     python src/run_multi_qa.py \
-#     --tokenizer /home/hsin/AutoAWQ/Llama-3-8B-AWQ \
-#     --model_name_or_path /home/hsin/AutoAWQ/Llama-3-8B-AWQ \
+#     --tokenizer /home/hsin/AutoAWQ/Llama-3-8B-Instruct-AWQ \
+#     --model_name_or_path /home/hsin/AutoAWQ/Llama-3-8B-Instruct-AWQ \
 #     --dataset bbq_fewshot \
 #     --category age,disability_status,gender_identity,nationality,physical_appearance,race_ethnicity,race_x_gender,race_x_ses,religion,ses,sexual_orientation \
 #     --do_inference \
@@ -44,25 +44,25 @@ module load shared singularity
 #     --results_dest ./log/bbq/${DATASET}_${SAVE_AS}.json
 
 # DATASET=bbq_fewshot
-# SAVE_AS=llama3_8b_awq_2k_lora
+# SAVE_AS=llama3_8b_instruct_awq_clean_lora
 
 # singularity exec --nv ../open-instruct/img/awq-openai-triton-peft.img \
 #     python src/run_multi_qa.py \
-#     --tokenizer /home/hsin/AutoAWQ/Llama-3-8B-AWQ \
-#     --model_name_or_path /home/hsin/AutoAWQ/Llama-3-8B-AWQ \
+#     --tokenizer /home/hsin/AutoAWQ/Llama-3-8B-Instruct-AWQ \
+#     --model_name_or_path /home/hsin/AutoAWQ/Llama-3-8B-Instruct-AWQ \
 #     --dataset ${DATASET} \
 #     --category age,disability_status,gender_identity,nationality,physical_appearance,race_ethnicity,race_x_gender,race_x_ses,religion,ses,sexual_orientation \
 #     --do_inference \
 #     --disable_progress_bar \
 #     --awq --lora \
-#     --lora_path /home/hsin/AutoAWQ/Llama-3-8B-AWQ-2k-lora-8-16 \
+#     --lora_path /home/hsin/AutoAWQ/Llama-3-8B-Instruct-AWQ-clean-lora-8-16 \
 #     --save_results \
 #     --save_outputs \
 #     --output_dest ./log/bbq/${DATASET}_${SAVE_AS}.jsonl \
 #     --results_dest ./log/bbq/${DATASET}_${SAVE_AS}.json
 
 # DATASET=bbq_fewshot
-# SAVE_AS=llama3_8b_pr_0.3_lora
+# SAVE_AS=llama3_8b_instruct_pr_0.3_lora
 
 # singularity exec --nv ../open-instruct/img/awq-openai-triton-peft.img \
 #     python src/run_multi_qa.py \
@@ -73,8 +73,80 @@ module load shared singularity
 #     --do_inference \
 #     --disable_progress_bar \
 #     --prune --lora \
-#     --prune_path /home/hsin/LLM-Pruner/prune_log/llama3_8b_prune_0p3/pytorch_model.bin \
-#     --lora_path /home/hsin/LLM-Pruner/tune_log/llama3_8b_prune_0p3 \
+#     --prune_path /home/hsin/LLM-Pruner/prune_log/llama3_8b_instruct_prune_0p3/pytorch_model.bin \
+#     --lora_path /home/hsin/LLM-Pruner/tune_log/llama3_8b_instruct_prune_0p3 \
+#     --save_results \
+#     --save_outputs \
+#     --output_dest ./log/bbq/${DATASET}_${SAVE_AS}.jsonl \
+#     --results_dest ./log/bbq/${DATASET}_${SAVE_AS}.json
+
+# DATASET=bbq_fewshot
+# SAVE_AS=llama3_8b_instruct_awq_openfunc_sft
+
+# singularity exec --nv ../open-instruct/img/awq-openai-triton-peft.img \
+#     python src/run_multi_qa.py \
+#     --tokenizer TechxGenus/Meta-Llama-3-8B-Instruct-AWQ \
+#     --model_name_or_path TechxGenus/Meta-Llama-3-8B-Instruct-AWQ \
+#     --dataset ${DATASET} \
+#     --category age,disability_status,gender_identity,nationality,physical_appearance,race_ethnicity,race_x_gender,race_x_ses,religion,ses,sexual_orientation \
+#     --do_inference \
+#     --disable_progress_bar \
+#     --awq --lora \
+#     --lora_path /home/hsin/sdft/checkpoints_llama3_instruct_awq_4bit/openfunction/sft \
+#     --save_results \
+#     --save_outputs \
+#     --output_dest ./log/bbq/${DATASET}_${SAVE_AS}.jsonl \
+#     --results_dest ./log/bbq/${DATASET}_${SAVE_AS}.json
+
+# DATASET=bbq_fewshot
+# SAVE_AS=llama3_8b_instruct_awq_openfunc_sdft
+
+# singularity exec --nv ../open-instruct/img/awq-openai-triton-peft.img \
+#     python src/run_multi_qa.py \
+#     --tokenizer TechxGenus/Meta-Llama-3-8B-Instruct-AWQ \
+#     --model_name_or_path TechxGenus/Meta-Llama-3-8B-Instruct-AWQ \
+#     --dataset ${DATASET} \
+#     --category age,disability_status,gender_identity,nationality,physical_appearance,race_ethnicity,race_x_gender,race_x_ses,religion,ses,sexual_orientation \
+#     --do_inference \
+#     --disable_progress_bar \
+#     --awq --lora \
+#     --lora_path /home/hsin/sdft/checkpoints_llama3_instruct_awq_4bit/openfunction/sdft \
+#     --save_results \
+#     --save_outputs \
+#     --output_dest ./log/bbq/${DATASET}_${SAVE_AS}.jsonl \
+#     --results_dest ./log/bbq/${DATASET}_${SAVE_AS}.json
+
+# DATASET=bbq_fewshot
+# SAVE_AS=llama3_8b_instruct_openfunc_sft
+
+# singularity exec --nv ../open-instruct/img/awq-openai-triton-peft.img \
+#     python src/run_multi_qa.py \
+#     --tokenizer meta-llama/Meta-Llama-3-8B-Instruct \
+#     --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct \
+#     --dataset ${DATASET} \
+#     --category age,disability_status,gender_identity,nationality,physical_appearance,race_ethnicity,race_x_gender,race_x_ses,religion,ses,sexual_orientation \
+#     --do_inference \
+#     --disable_progress_bar \
+#     --lora \
+#     --lora_path /home/hsin/sdft/checkpoints_llama3/openfunction/sft \
+#     --save_results \
+#     --save_outputs \
+#     --output_dest ./log/bbq/${DATASET}_${SAVE_AS}.jsonl \
+#     --results_dest ./log/bbq/${DATASET}_${SAVE_AS}.json
+
+# DATASET=bbq_fewshot
+# SAVE_AS=llama3_8b_instruct_openfunc_sdft
+
+# singularity exec --nv ../open-instruct/img/awq-openai-triton-peft.img \
+#     python src/run_multi_qa.py \
+#     --tokenizer TechxGenus/Meta-Llama-3-8B-Instruct-AWQ \
+#     --model_name_or_path TechxGenus/Meta-Llama-3-8B-Instruct-AWQ \
+#     --dataset ${DATASET} \
+#     --category age,disability_status,gender_identity,nationality,physical_appearance,race_ethnicity,race_x_gender,race_x_ses,religion,ses,sexual_orientation \
+#     --do_inference \
+#     --disable_progress_bar \
+#     --lora \
+#     --lora_path /home/hsin/sdft/checkpoints_llama3/openfunction/sdft \
 #     --save_results \
 #     --save_outputs \
 #     --output_dest ./log/bbq/${DATASET}_${SAVE_AS}.jsonl \
